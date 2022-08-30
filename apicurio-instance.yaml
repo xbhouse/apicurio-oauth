@@ -1,0 +1,13 @@
+apiVersion: registry.apicur.io/v1
+kind: ApicurioRegistry
+metadata:
+  name: apicurioregistry-kafkasql
+  namespace: apicurio-oauth
+spec:
+  configuration:
+    kafkasql:
+      bootstrapServers: 'kafka-cluster-kafka-bootstrap.apicurio-oauth.svc:9092'
+    persistence: kafkasql
+  deployment:
+    host: >-
+      apicurioregistry-kafkasql.apicurio-oauth.router-default.apps.cluster-mmxzg.mmxzg.sandbox1072.opentlc.com

@@ -1,0 +1,35 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: apicurioregistry-kafkasql-service
+  namespace: apicurio-oauth
+  labels:
+    apicur.io/name: apicurioregistry-kafkasql
+    apicur.io/type: apicurio-registry
+    apicur.io/version: 2.0.0.Final
+    app: apicurioregistry-kafkasql
+    app.kubernetes.io/instance: apicurioregistry-kafkasql
+    app.kubernetes.io/managed-by: apicurio-registry-operator
+    app.kubernetes.io/name: apicurio-registry
+    app.kubernetes.io/version: 2.0.0.Final
+  annotations:
+    service.alpha.openshift.io/serving-cert-secret-name: oauth-proxy-tls
+spec:
+  clusterIP: 172.30.252.85
+  ipFamilies:
+    - IPv4
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+    - name: oauth-proxy
+      port: 443
+      targetPort: 8443
+  internalTrafficPolicy: Cluster
+  clusterIPs:
+    - 172.30.252.85
+  type: ClusterIP
+  ipFamilyPolicy: SingleStack
+  sessionAffinity: None
+  selector:
+    app: apicurioregistry-kafkasql

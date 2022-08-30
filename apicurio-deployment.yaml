@@ -1,0 +1,165 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: apicurioregistry-kafkasql-tls-deployment
+  namespace: apicurio-oauth
+  labels:
+    apicur.io/name: apicurioregistry-kafkasql-tls
+    apicur.io/type: apicurio-registry
+    apicur.io/version: 2.0.0.Final
+    app: apicurioregistry-kafkasql-tls
+    app.kubernetes.io/instance: apicurioregistry-kafkasql-tls
+    app.kubernetes.io/managed-by: apicurio-registry-operator
+    app.kubernetes.io/name: apicurio-registry
+    app.kubernetes.io/version: 2.0.0.Final
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apicurioregistry-kafkasql-tls
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        apicur.io/name: apicurioregistry-kafkasql-tls
+        apicur.io/type: apicurio-registry
+        apicur.io/version: 2.0.0.Final
+        app: apicurioregistry-kafkasql-tls
+        app.kubernetes.io/instance: apicurioregistry-kafkasql-tls
+        app.kubernetes.io/managed-by: apicurio-registry-operator
+        app.kubernetes.io/name: apicurio-registry
+        app.kubernetes.io/version: 2.0.0.Final
+    spec:
+      serviceAccountName: sa-registry
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: registry-kafkasql-tls-keystore
+          secret:
+            secretName: kafka-user
+            defaultMode: 420
+        - name: registry-kafkasql-tls-truststore
+          secret:
+            secretName: kafka-cluster-cluster-ca-cert
+            defaultMode: 420
+        - name: oauth-proxy-tls
+          secret:
+            secretName: oauth-proxy-tls
+            defaultMode: 420
+        - name: cookie-secret
+          secret:
+            secretName: cookie-secret
+            defaultMode: 420
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: oauth-proxy
+          ports:
+            - name: public
+              containerPort: 8443
+              protocol: TCP
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: oauth-proxy-tls
+              readOnly: true
+              mountPath: /etc/tls/private
+            - name: cookie-secret
+              readOnly: true
+              mountPath: /var/run/secrets/oauth-proxy
+          terminationMessagePolicy: File
+          image: 'openshift/oauth-proxy:latest'
+          args:
+            - '--https-address=:8443'
+            - '--provider=openshift'
+            - '--openshift-service-account=sa-registry'
+            - '--upstream=http://localhost:8080'
+            - '--tls-cert=/etc/tls/private/tls.crt'
+            - '--tls-key=/etc/tls/private/tls.key'
+            - '--cookie-secret-file=/var/run/secrets/oauth-proxy/cookie-secret'
+            - '--pass-user-headers'
+            - '--pass-access-token'
+        - resources:
+            limits:
+              cpu: '1'
+              memory: 1300Mi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          name: apicurioregistry-kafkasql-tls
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: 'kafka-cluster-kafka-bootstrap.apicurio-oauth.svc:9093'
+            - name: REGISTRY_PROPERTIES_PREFIX
+              value: REGISTRY_
+            - name: REGISTRY_KAFKA_COMMON_SECURITY_PROTOCOL
+              value: SSL
+            - name: REGISTRY_KAFKA_COMMON_SSL_KEYSTORE_TYPE
+              value: PKCS12
+            - name: REGISTRY_KAFKA_COMMON_SSL_KEYSTORE_LOCATION
+              value: /etc/registry-kafkasql-tls-keystore/user.p12
+            - name: REGISTRY_KAFKA_COMMON_SSL_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-user
+                  key: user.password
+            - name: REGISTRY_KAFKA_COMMON_SSL_TRUSTSTORE_TYPE
+              value: PKCS12
+            - name: REGISTRY_KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION
+              value: /etc/registry-kafkasql-tls-truststore/ca.p12
+            - name: REGISTRY_KAFKA_COMMON_SSL_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-cluster-cluster-ca-cert
+                  key: ca.password
+            - name: LOG_LEVEL
+              value: INFO
+            - name: QUARKUS_PROFILE
+              value: prod
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: registry-kafkasql-tls-keystore
+              readOnly: true
+              mountPath: etc/registry-kafkasql-tls-keystore
+            - name: registry-kafkasql-tls-truststore
+              readOnly: true
+              mountPath: etc/registry-kafkasql-tls-truststore
+          terminationMessagePolicy: File
+          image: 'quay.io/apicurio/apicurio-registry-kafkasql:2.0.0.Final'
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600

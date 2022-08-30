@@ -1,0 +1,29 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  annotations:
+    route.openshift.io/termination: reencrypt
+  name: apicurioregistry-kafkasql-tls-ingress-ms6v4
+  namespace: apicurio-oauth
+  labels:
+    apicur.io/name: apicurioregistry-kafkasql-tls
+    apicur.io/type: apicurio-registry
+    apicur.io/version: 2.0.0.Final
+    app: apicurioregistry-kafkasql-tls
+    app.kubernetes.io/instance: apicurioregistry-kafkasql-tls
+    app.kubernetes.io/managed-by: apicurio-registry-operator
+    app.kubernetes.io/name: apicurio-registry
+    app.kubernetes.io/version: 2.0.0.Final
+spec:
+  host: >-
+    apicurioregistry-kafkasql-tls.apicurio-oauth.router-default.apps.cluster-mmxzg.mmxzg.sandbox1072.opentlc.com
+  to:
+    kind: Service
+    name: apicurioregistry-kafkasql-tls-service
+    weight: 100
+  port:
+    targetPort: oauth-proxy
+  tls:
+    termination: reencrypt
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

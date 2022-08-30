@@ -1,0 +1,27 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  annotations:
+    route.openshift.io/termination: reencrypt
+  name: apicurioregistry-kafkasql-tls-ingress
+  labels:
+    apicur.io/name: apicurioregistry-kafkasql-tls
+    apicur.io/type: apicurio-registry
+    apicur.io/version: 2.0.0.Final
+    app: apicurioregistry-kafkasql-tls
+    app.kubernetes.io/instance: apicurioregistry-kafkasql-tls
+    app.kubernetes.io/managed-by: apicurio-registry-operator
+    app.kubernetes.io/name: apicurio-registry
+    app.kubernetes.io/version: 2.0.0.Final
+spec:
+  rules:
+    - host: >-
+        apicurioregistry-kafkasql-tls.apicurio-oauth.router-default.apps.cluster-mmxzg.mmxzg.sandbox1072.opentlc.com
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: apicurioregistry-kafkasql-tls-service
+                port:
+                  name: oauth-proxy
