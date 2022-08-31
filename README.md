@@ -26,16 +26,16 @@
    apiVersion: registry.apicur.io/v1
    kind: ApicurioRegistry
    metadata:
-   name: example-apicurioregistry-kafkasql
+      name: example-apicurioregistry-kafkasql
    spec:
-   configuration:
-   persistence: "kafkasql"
-   kafkasql:
-   bootstrapServers: <bootstrap server with TLS from Kafka cluster>
-   security:
-   tls:
-   keystoreSecretName: <kafka-user-name>
-   truststoreSecretName: <kafka-cluster-name-cluster-ca-cert>
+      configuration:
+         persistence: "kafkasql"
+         kafkasql:
+            bootstrapServers: <bootstrap server with TLS from Kafka cluster>
+            security:
+               tls:
+                  keystoreSecretName: <kafka-user-name>
+                  truststoreSecretName: <kafka-cluster-name-cluster-ca-cert>
    ```
 
 7. Verify you have the following Apicurio Registry resources:
@@ -92,6 +92,9 @@
 15. Update the Apicurio Registry Ingress to create a Reencrypt Route and point to the oauth-proxy port:
 
 
+        annotations:
+           route.openshift.io/termination: reencrypt
+        ...
         rules:
             - host: >-
                 apicurioregistry-kafkasql-tls.apicurio-oauth.router-default.apps.cluster-mmxzg.mmxzg.sandbox1072.opentlc.com
@@ -100,7 +103,7 @@
                     - pathType: ImplementationSpecific
                       backend:
                         service:
-                            name: apicurioregistry-kafkasql-tls-service
+                            name: <apicurioregistry-service-name>
                             port:
                                 name: oauth-proxy
 
