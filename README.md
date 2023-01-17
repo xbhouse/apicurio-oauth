@@ -1,4 +1,4 @@
-<h2>Steps to secure Apicurio Registry backed by Kafka Storage with oauth-proxy</h2>
+<h2>Steps to secure Apicurio Registry backed by Kafka Storage with oauth-proxy on OpenShift</h2>
 
 
 1. Install AMQ Streams and Apicurio Registry
